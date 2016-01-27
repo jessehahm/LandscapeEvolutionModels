@@ -19,10 +19,10 @@ def plot_h(h_in):
 # Scale of the grid; km
 xl = 100 * 10**3
 yl = 100 * 10**3
-nn = nx*ny
 #Resolution of the grid
 nx = 101
 ny = 101 #number of cells
+nn = nx*ny
 dx = xl/(nx-1)
 dy = yl/(ny-1) 
 
@@ -41,16 +41,37 @@ plot_h(h)
 diag_dist = np.sqrt((dx**2) + (dy**2))
 receiver = np.zeros(nn)
 slope = np.zeros(nn)
-for ij in range(len(h)):
+
+indexVector = range(nn)
+
+
+# to translate between 2D i,j matrix and
+# 1D ij vector, ij = i + j*nx 
+# Boundary rows:
+# i = 0; i = ny-1
+# j = 0; j = nx-1
+# in python, j: [0,ny-1]; i: [0, nx-1]
+# Need to take subset of indexVector away from boundaries
+
+#i = 0
+boundary1 = range(ny)*nx
+#i = ny-1
+boundary2 = (ny-1) + range(ny)*nx
+#j = 0
+boundary3 = range(nx)
+#j = nx-1
+boundary4 = range(nx) + (nx-1)*nx
+
+#Now, create subset of indexVector away from boundaries
+
+for ij in range(nn):
     # if not on boundary:
     ij_neighbors =[[ij-nx-1], [ij-nx], [ij-nx+1],
                    [ij-1],    [ij],    [ij+1],
                    [ij+nx+1], [ij+nx], [ij+nx+1]]  
     
-    h_neighbors = [h[ij-nx-1], h[ij-nx], h[ij-nx+1],
-                   h[ij-1],    h[ij],    h[ij+1],
-                   h[ij+nx+1], h[ij+nx], h[ij+nx+1]]
-                   
+    h_neighbors = h[ij_neighbors]
+    
     dist_neighbors = [diag_dist, dy, diag_dist,
                       dx,        1,  dx,
                       diag_dist, dy, diag_dist]
