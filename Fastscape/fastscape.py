@@ -11,18 +11,15 @@ EPS 117, UC Berkeley, Spring 2016
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_h(h_in):
-    """Take 1-d array, plot as color mesh grid"""
-    grid = np.reshape(h_in,(nx,ny))
-    plt.pcolormesh(grid)
 
 # Scale of the grid; km
 xl = 100 * 10**3
 yl = 100 * 10**3
-nn = nx*ny
 #Resolution of the grid
 nx = 101
-ny = 101 #number of cells
+ny = 101 #number of nodes
+nn = nx*ny
+
 dx = xl/(nx-1)
 dy = yl/(ny-1) 
 
@@ -30,6 +27,12 @@ dt = 1000 #yrs; timestep
 nstep = 1000 #number of timesteps
 n = 1 #Slope exponent
 m = 0.4 # drainage area exponent
+
+def plot_h(h_in):
+    """Take 1-d array, plot as color mesh grid"""
+    grid = np.reshape(h_in,(nx,ny))
+    plt.pcolormesh(grid)
+
 
 # Create array that stores elevation scalar
 # Convention wherein single number describes node
@@ -39,8 +42,9 @@ h = np.random.rand((nn))
 plot_h(h)
 
 diag_dist = np.sqrt((dx**2) + (dy**2))
-receiver = np.zeros(nn)
+receiver = range(len(h))
 slope = np.zeros(nn)
+
 for ij in range(len(h)):
     # if not on boundary:
     ij_neighbors =[[ij-nx-1], [ij-nx], [ij-nx+1],
