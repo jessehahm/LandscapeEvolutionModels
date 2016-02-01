@@ -37,8 +37,8 @@ def plot_h(h_in):
 
 # Create array that stores elevation scalar
 # Convention wherein single number describes node
-#h = np.random.rand((nn))
-h = np.arange(nn)
+h = np.random.rand((nn))
+#h = np.arange(nn)
 
 plot_h(h)
 
@@ -73,7 +73,7 @@ for ij in oneD_noBoundary:
     slope[ij] = steepest_descent
     
 receiver_reshaped = receiver.reshape(ny,nx)
-plot_h(receiver_reshaped)
+plot_h(h)
 
 ## ndon = total number of donors to a node
 ndon = np.zeros(nn,int)
@@ -82,7 +82,8 @@ donor = np.zeros([8,nn],int)
 
 for ij in receiver:
     if receiver[ij] != ij:   #if not myself
-        donor[ndon[receiver[ij]], receiver[ij]] = ij
+        recij = receiver[ij]
+        donor[ndon[recij], recij] = ij
         #Increment number of donors by one for this receiver
-        ndon[receiver[ij]] = ndon[receiver[ij]] + 1 
+        ndon[recij] = ndon[recij] + 1 
 
