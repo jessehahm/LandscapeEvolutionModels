@@ -13,11 +13,11 @@ import matplotlib.pyplot as plt
 
 
 # Scale of the grid; km
-xl = 100 * 10**-2
-yl = 100 * 10**-2
+xl = 10**1
+yl = 10**1
 #Resolution of the grid
-nx = 4
-ny = 5 #number of nodes
+nx = 10**1
+ny = 10**1 #number of nodes
 nn = nx*ny
 indexVector = np.arange(nn)
 dx = xl/(nx)
@@ -49,6 +49,7 @@ slope = np.zeros(nn)
 twoD_index = indexVector.reshape(ny,nx)
 twoD_noBoundary = twoD_index[1:-1,1:-1]
 oneD_noBoundary = twoD_noBoundary.ravel()
+# to get boundaries; not this!
 
 for ij in oneD_noBoundary:
     # if not on boundary:
@@ -57,7 +58,7 @@ for ij in oneD_noBoundary:
                             ij+nx+1, ij+nx, ij+nx+1])  
     
     h_neighbors = h[ij_neighbors]
-    
+
     dist_neighbors = np.array([diag_dist, dy, diag_dist,
                                dx,        1,  dx,
                                diag_dist, dy, diag_dist])
@@ -71,3 +72,17 @@ for ij in oneD_noBoundary:
     receiver[ij] = ij_neighbors[steepest_descent_index]
     slope[ij] = steepest_descent
     
+receiver_reshaped = receiver.reshape(ny,nx)
+plot_h(receiver_reshaped)
+
+## ndon = total number of donors to a node
+ndon = np.zeros(nn,int)
+# donors = indices of donors to a node 
+donor = np.zeros([8,nn],int)
+
+for ij in receiver:
+    if receiver[ij] != ij:   #if not myself
+        donor[ndon[receiver[ij]], receiver[ij]] = ij
+        #Increment number of donors by one for this receiver
+        ndon[receiver[ij]] = ndon[receiver[ij]] + 1 
+
