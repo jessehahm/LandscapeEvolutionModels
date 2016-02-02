@@ -101,7 +101,7 @@ reshaped_receiver = receiver.reshape(ny,nx)
 ## ndon = total number of donors to a node
 ndon = np.zeros(nn,int)
 # donors = indices of donors to a node 
-donor = np.zeros([8,nn],int)
+donor = np.full([8,nn],-1,int)
 
 #Build donor and ndon array
 for ij in indexVector:
@@ -162,3 +162,28 @@ Q = plt.quiver(qx+(dx/2.0),qy+(dy/2.0),qU,qV)
 
 plt.gca().invert_yaxis()
 plt.show()
+
+
+######## MAKE THE STACK
+
+# START WITH BASE-LEVELS / PITS 
+# (Where receiver[ij] = ij)
+
+baseLevels = receiver[receiver == indexVector]
+stack = np.empty(nn)
+i = 0
+def add_to_stack(ij):
+    global i
+    stack[i] = ij
+    i = i+1
+    for k in donor[0:ndon[ij],ij]:
+              add_to_stack(k)
+abc = 0
+
+for ij in baseLevels:
+    add_to_stack(ij)
+    
+
+    
+
+    
