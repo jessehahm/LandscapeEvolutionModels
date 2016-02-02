@@ -65,12 +65,13 @@ reshaped_h = h.reshape(ny,nx)
 diag_dist = np.sqrt((dx**2) + (dy**2))
 receiver = np.arange(nn)
 slope = np.zeros(nn)
-
+direction = np.zeros(nn)
 twoD_index = indexVector.reshape(ny,nx)
 twoD_noBoundary = twoD_index[1:-1,1:-1]
 oneD_noBoundary = twoD_noBoundary.ravel()
 # to get boundaries; not this!
 
+#Build receiver array
 for ij in oneD_noBoundary:
     # if not on boundary:
     ij_neighbors =np.array([ij-nx-1, ij-nx, ij-nx+1,
@@ -91,6 +92,7 @@ for ij in oneD_noBoundary:
     steepest_descent_index = np.argmax(slope_neighbors)
     receiver[ij] = ij_neighbors[steepest_descent_index]
     slope[ij] = steepest_descent
+    direction[ij] = steepest_descent_index    
     
 reshaped_receiver = receiver.reshape(ny,nx)
 
@@ -99,6 +101,7 @@ ndon = np.zeros(nn,int)
 # donors = indices of donors to a node 
 donor = np.zeros([8,nn],int)
 
+#Build donor and ndon array
 for ij in indexVector:
     if receiver[ij] != ij:   #if not myself
         recij = receiver[ij]
@@ -117,3 +120,40 @@ print reshaped_receiver
 print 'ndon'
 print reshaped_ndon
 plot_mesh(h)
+
+U = np.zeros(nn)
+V = np.zeros(nn)
+for ij in indexVector:
+    if ij == 0:
+        U[ij] = -1
+        V[ij] = 1
+    if ij == 1:
+        U[ij] = 0
+        V[ij] = 1
+    if ij == 2:
+        U[ij] = 1
+        V[ij] = 1
+    if ij == 3:
+        U[ij] = -1
+        V[ij] = 0
+    if ij == 4:
+        U[ij] = 0
+        V[ij] = 0
+    if ij == 5:
+        U[ij] = 1
+        V[ij] = 0
+    if ij == 6:
+        U[ij] = -1
+        V[ij] = -1
+    if ij == 7:
+        U[ij] = 0
+        V[ij] = -1
+    if ij == 8:
+        U[ij] = 1
+        V[ij] = -1
+        
+qx = np.arange(nx)
+qy = np.arange(ny)
+qU = U.reshape(ny,nx)
+qV = V.reshape(ny,nx)
+Q = plt.quiver(qx,qy,qU,qV)
