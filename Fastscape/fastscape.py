@@ -51,7 +51,7 @@ dx = xl/(nx)
 dy = yl/(ny) 
 nn = nx*ny
 indexVector = np.arange(nn)
-
+reshaped_index = indexVector.reshape(ny,nx)
 def plot_mesh(oneD_in):
     """Take 1-d array, plot as color mesh grid"""
     grid = np.reshape(oneD_in,(ny,nx))
@@ -59,8 +59,8 @@ def plot_mesh(oneD_in):
     plt.gca().invert_yaxis()
     plt.show()
 
-h_reshaped = h.reshape(ny,nx)
-plot_h(h)
+reshaped_h = h.reshape(ny,nx)
+
 
 diag_dist = np.sqrt((dx**2) + (dy**2))
 receiver = np.arange(nn)
@@ -92,17 +92,28 @@ for ij in oneD_noBoundary:
     receiver[ij] = ij_neighbors[steepest_descent_index]
     slope[ij] = steepest_descent
     
-receiver_reshaped = receiver.reshape(ny,nx)
+reshaped_receiver = receiver.reshape(ny,nx)
 
 ## ndon = total number of donors to a node
 ndon = np.zeros(nn,int)
 # donors = indices of donors to a node 
 donor = np.zeros([8,nn],int)
 
-for ij in receiver:
+for ij in indexVector:
     if receiver[ij] != ij:   #if not myself
         recij = receiver[ij]
         donor[ndon[recij], recij] = ij
         #Increment number of donors by one for this receiver
         ndon[recij] = ndon[recij] + 1 
 
+reshaped_ndon = ndon.reshape(ny,nx)
+
+print 'h'
+print reshaped_h
+print 'index'
+print reshaped_index
+print 'receiver'
+print reshaped_receiver
+print 'ndon'
+print reshaped_ndon
+plot_mesh(h)
