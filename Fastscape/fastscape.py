@@ -11,35 +11,55 @@ EPS 117, UC Berkeley, Spring 2016
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+####################################
+#USER DEFINED LANDSCAPE VARIABLES
+"""
 # Scale of the grid; km
 xl = 10**1
 yl = 10**1
 #Resolution of the grid
 nx = 10**1
 ny = 10**1 #number of nodes
-nn = nx*ny
-indexVector = np.arange(nn)
-dx = xl/(nx)
-dy = yl/(ny) 
-
-dt = 1000 #yrs; timestep
-nstep = 1000 #number of timesteps
-n = 1 #Slope exponent
-m = 0.4 # drainage area exponent
-
-def plot_h(h_in):
-    """Take 1-d array, plot as color mesh grid"""
-    grid = np.reshape(h_in,(nx,ny))
-    plt.pcolormesh(grid)
-    plt.gca().invert_yaxis()
-
 
 # Create array that stores elevation scalar
 # Convention wherein single number describes node
 h = np.random.rand((nn))
 #h = np.arange(nn)
+"""
+################
+#  TEST ARRAY  #
+################
+xl = 10.
+yl = 5.
+nx = 10
+ny = 5
+h = np.array([9,0,0,0,6,6,6,5,4,3,
+              2,2,2,2,5,5,5,4,4,2,
+              3,3,3,3,5,4,3,2,1,0,
+              2,2,2,2,5,5,5,4,4,2,
+              0,0,0,0,6,6,6,5,4,3])
 
+#################
+dt = 1000 #yrs; timestep
+nstep = 1000 #number of timesteps
+n = 1 #Slope exponent
+m = 0.4 # drainage area exponent
+################
+
+# DERIVED VARIABLES
+dx = xl/(nx)
+dy = yl/(ny) 
+nn = nx*ny
+indexVector = np.arange(nn)
+
+def plot_mesh(oneD_in):
+    """Take 1-d array, plot as color mesh grid"""
+    grid = np.reshape(oneD_in,(ny,nx))
+    plt.pcolormesh(grid)
+    plt.gca().invert_yaxis()
+    plt.show()
+
+h_reshaped = h.reshape(ny,nx)
 plot_h(h)
 
 diag_dist = np.sqrt((dx**2) + (dy**2))
@@ -73,7 +93,6 @@ for ij in oneD_noBoundary:
     slope[ij] = steepest_descent
     
 receiver_reshaped = receiver.reshape(ny,nx)
-plot_h(h)
 
 ## ndon = total number of donors to a node
 ndon = np.zeros(nn,int)
