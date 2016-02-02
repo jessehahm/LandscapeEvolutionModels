@@ -58,7 +58,7 @@ reshaped_index = indexVector.reshape(ny,nx)
 def plot_mesh(oneD_in):
     """Take 1-d array, plot as color mesh grid"""
     grid = np.reshape(oneD_in,(ny,nx))
-    plt.pcolormesh(grid)
+    plt.pcolormesh(grid, cmap='RdBu')
     #plt.gca().invert_yaxis()
     #plt.show()
 
@@ -170,7 +170,7 @@ plt.show()
 # (Where receiver[ij] = ij)
 
 baseLevels = receiver[receiver == indexVector]
-stack = np.empty(nn)
+stack = np.empty(nn,int)
 i = 0
 def add_to_stack(ij):
     global i
