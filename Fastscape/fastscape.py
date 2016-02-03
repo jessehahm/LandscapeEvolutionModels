@@ -10,16 +10,21 @@ EPS 117, UC Berkeley, Spring 2016
 ###  Import required libraries
 import numpy as np
 import matplotlib.pyplot as plt
-"""
+import time
+#from numba import autojit
+start = time.time()
+
+
+
 ####################################
 #USER DEFINED LANDSCAPE VARIABLES
 
 # Scale of the grid; km
-xl = 10**1
-yl = 10**1
+xl = 10**2
+yl = 10**2
 #Resolution of the grid
-nx = 10**1
-ny = 10**1 #number of nodes
+nx = 10**2
+ny = 10**2 #number of nodes
 nn = nx*ny
 
 # Create array that stores elevation scalar
@@ -41,7 +46,7 @@ h = np.array([9,0,0,0,6,6,6,5,4,3,
               2,2,2,2,5,5,5,4,4,2,
               0,0,0,0,6,6,6,5,4,3])
 #################
-
+"""
 
 
 dt = 1000 #yrs; timestep
@@ -55,6 +60,7 @@ dx = xl/(nx)
 dy = yl/(ny) 
 indexVector = np.arange(nn)
 reshaped_index = indexVector.reshape(ny,nx)
+
 def plot_mesh(oneD_in):
     """Take 1-d array, plot as color mesh grid"""
     grid = np.reshape(oneD_in,(ny,nx))
@@ -78,6 +84,7 @@ dist_neighbors = np.array([diag_dist, dy, diag_dist,
                            dx,        1,  dx,
                            diag_dist, dy, diag_dist])
 #Build receiver array
+
 for ij in oneD_noBoundary:
     # if not on boundary:
     ij_neighbors =np.array([ij-nx-1, ij-nx, ij-nx+1,
@@ -186,4 +193,4 @@ for ij in baseLevels:
 
     
 
-    
+print 'It took', time.time()-start, 'seconds.'
