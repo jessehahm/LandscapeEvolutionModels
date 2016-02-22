@@ -15,7 +15,7 @@ import time
 start = time.time()
 
 
-
+"""
 ####################################
 #USER DEFINED LANDSCAPE VARIABLES
 
@@ -46,7 +46,7 @@ h = np.array([9,0,0,0,6,6,6,5,4,3,
               2,2,2,2,5,5,5,4,4,2,
               0,0,0,0,6,6,6,5,4,3])
 #################
-"""
+
 
 
 dt = 1000 #yrs; timestep
@@ -84,7 +84,7 @@ dist_neighbors = np.array([diag_dist, dy, diag_dist,
                            dx,        1,  dx,
                            diag_dist, dy, diag_dist])
 #Build receiver array
-
+#receiver array stores each node's lowest neighbor
 for ij in oneD_noBoundary:
     # if not on boundary:
     ij_neighbors =np.array([ij-nx-1, ij-nx, ij-nx+1,
@@ -111,6 +111,7 @@ ndon = np.zeros(nn,int)
 donor = np.full([8,nn],-1,int)
 
 #Build donor and ndon array
+#donor array: list of nodes that drain to you
 for ij in indexVector:
     if receiver[ij] != ij:   #if not myself
         recij = receiver[ij]
@@ -129,6 +130,7 @@ print reshaped_receiver
 print 'ndon'
 print reshaped_ndon
 
+#Build arrow index vector arrays
 U = np.zeros(nn)
 V = np.zeros(nn)
 for ij in indexVector:
@@ -160,7 +162,10 @@ for ij in indexVector:
         U[ij] = 1
         V[ij] = -1
 
+# Plot grid-coded by height 
 plot_mesh(h)
+
+# Plot arrows of steepest descent
 qx = np.arange(nx)
 qy = np.arange(ny)
 qU = U.reshape(ny,nx)
@@ -178,19 +183,25 @@ plt.show()
 
 baseLevels = receiver[receiver == indexVector]
 stack = np.empty(nn,int)
-i = 0
-def add_to_stack(ij):
-    global i
-    stack[i] = ij
-    i = i+1
+
+#Create array of length nn, 'catchment'
+#where value = name of catchment
+#which is actually the baselevel!
+catchment = np.empty(nn,int)
+nstack = 0
+
+def add_to_stack(ij, cc):
+    global catchment 
+    global nstack
+    stack[nstack] = ij
+    catchment[ij] = cc    
+    nstack = nstack+1
     for k in donor[0:ndon[ij],ij]:
-              add_to_stack(k)
-abc = 0
+              add_to_stack(k, cc)
 
 for ij in baseLevels:
-    add_to_stack(ij)
-    
-
+    cc = ij
+    add_to_stack(ij, cc)
     
 
 print 'It took', time.time()-start, 'seconds.'
