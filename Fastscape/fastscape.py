@@ -162,21 +162,9 @@ for ij in indexVector:
         U[ij] = 1
         V[ij] = -1
 
-# Plot grid-coded by height 
-plot_mesh(h)
-
-# Plot arrows of steepest descent
-qx = np.arange(nx)
-qy = np.arange(ny)
-qU = U.reshape(ny,nx)
-qV = V.reshape(ny,nx)
-Q = plt.quiver(qx+(dx/2.0),qy+(dy/2.0),qU,qV)
-
-plt.gca().invert_yaxis()
-plt.show()
 
 
-######## MAKE THE STACK
+#%% ####### MAKE THE STACK
 
 # START WITH BASE-LEVELS / PITS 
 # (Where receiver[ij] = ij)
@@ -204,4 +192,26 @@ for ij in baseLevels:
     add_to_stack(ij, cc)
     
 
+#%% Drainage area
+area = np.ones(nn)*dx*dy
+reversed_stack = stack[::-1]
+
+for ij in reversed_stack:
+    area[receiver[ij]] = area[receiver[ij]] + area[ij] 
+    
+#%% Plotting
 print 'It took', time.time()-start, 'seconds.'
+
+
+# Plot grid-coded by height 
+plot_mesh(catchment)
+
+# Plot arrows of steepest descent
+qx = np.arange(nx)
+qy = np.arange(ny)
+qU = U.reshape(ny,nx)
+qV = V.reshape(ny,nx)
+Q = plt.quiver(qx+(dx/2.0),qy+(dy/2.0),qU,qV)
+
+plt.gca().invert_yaxis()
+plt.show()
