@@ -197,8 +197,11 @@ area = np.ones(nn)*dx*dy
 reversed_stack = stack[::-1]
 
 for ij in reversed_stack:
-    area[receiver[ij]] = area[receiver[ij]] + area[ij] 
-    
+    if receiver[ij] != ij:
+        area[receiver[ij]] = area[receiver[ij]] + area[ij] 
+
+print 'area:'
+print area.reshape(ny,nx)    
 #%% Plotting
 print 'It took', time.time()-start, 'seconds.'
 
