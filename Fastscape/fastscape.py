@@ -42,17 +42,17 @@ ny = 5
 nn = nx*ny
 h = np.array([9,0,0,0,6,6,6,5,4,3,
               2,2,2,2,5,5,5,4,4,2,
-              3,3,3,3,5,4,3,2,1,0,
+              3,3,3,3,5,4,3,2,1,0.5,
               2,2,2,2,5,5,5,4,4,2,
-              0,0,0,0,6,6,6,5,4,3])
+              0,0,0,0,6,6,6,5,4,3], dtype=float)
 #################
 
 
-k = 2*10**(-4)
-U = 2*10**(-3) #(m/yr)
-delta_t = 1.0 #yrs; timestep
+k = 2.0*10**(-4)
+U = 2.0*10**(-3) #(m/yr)
+delta_t = 10.0**12 #yrs; timestep
 num_timesteps = 1000 #number of timesteps
-n = 1 #Slope exponent
+n = 1.0 #Slope exponent
 m = 0.4 # drainage area exponent
 ################
 
@@ -195,21 +195,23 @@ print area.reshape(ny,nx)
 # Local minima: Just add uplift
 
 #Add uplift to all non-boundary nodes
-for ij in oneD_noBoundary:
-    h[ij] = h[ij] + U*delta_t
+#for ij in oneD_noBoundary:
+  #  h[ij] = h[ij] + U*delta_t
 
 #Add height to all eroding nodes
 for ij in stack:
     if (receiver[ij] != ij):
-        C = k*A[ij]*delta_t/delta_x[ij]
-        h[ij] = (h[ij] + U*delta_t + C*h[receiver[ij]])/(1 + C) 
+        print ij
+        C = k*area[ij]*delta_t/delta_x[ij]
+        h[ij] = (h[ij] + C*h[receiver[ij]])/(1 + C) 
+#        h[ij] = (h[ij] + U*delta_t + C*h[receiver[ij]])/(1 + C) 
 
 #%% Plotting
 print 'It took', time.time()-start, 'seconds.'
 
 
 # Plot grid-coded by height 
-plot_mesh(catchment)
+plot_mesh(h)
 
 # Plot arrows of steepest descent
 #Build arrow index vector arrays
