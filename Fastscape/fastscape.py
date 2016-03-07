@@ -50,7 +50,7 @@ h = np.array([9,0,0,0,6,6,6,5,4,3,
 
 
 k = 1.0*10**(-4)
-U = 2.0*10**(-3) #(m/yr)
+U = 2.0*10**(-4) #(m/yr)
 delta_t = 10.0**3 #yrs; timestep
 num_timesteps = 100 #number of timesteps
 n = 1.0 #Slope exponent
@@ -63,10 +63,12 @@ dy = yl/(ny)
 indexVector = np.arange(nn)
 reshaped_index = indexVector.reshape(ny,nx)
 
-def plot_mesh(oneD_in):
-    """Take 1-d array, plot as color mesh grid"""
+def plot_mesh(oneD_in, cmap = 'gist_earth'):
+    """Take 1-d array, plot as color mesh grid
+    optional colormap"""
     grid = np.reshape(oneD_in,(ny,nx))
-    plt.pcolormesh(grid, cmap='gist_earth')
+    plt.pcolormesh(grid, cmap=cmap)
+    plt.colorbar()
     #plt.gca().invert_yaxis()
     #plt.show()
 
@@ -198,8 +200,11 @@ for istep in range(num_timesteps):
          #   print ij
             C = k*area[ij]*delta_t/delta_x[ij]
             h[ij] = (h[ij] + C*h[receiver[ij]])/(1 + C) 
+            #note, for stability, C should be between 0 and 1
+            #where stability = erosion not too fast or too slow
 
-    if (istep % 10 == 0):
+    #Print the landscape
+    if (istep % printFreq == 0):
         plot_mesh(h)
         plt.show()
 #%% Plotting
@@ -252,3 +257,23 @@ Q = plt.quiver(qx+(dx/2.0),qy+(dy/2.0),qU,qV)
 
 plt.gca().invert_yaxis()
 plt.show()
+plot_mesh(catchment)
+plt.show()
+
+
+#%% Find largest drainage area, plot long profile
+baseLevels = receiver[receiver == indexVector]
+catchmentAreas = area[baseLevels]
+index_baseLevel_biggestCatchment = np.argmax(catchmentAreas)
+node = index_baseLevel_biggestCatchment
+
+#declare python lists for length, elevations
+profile_distance = [0]
+profile_h = [h[node]]
+
+#ask donors who has largest area...
+#get the donor with the biggest drainage area... 
+while (ndon[node] > 0):
+    node = donor[np.argmax( area[donor[0:ndon[node], node]]), node ] 
+    profile_h.append(h[node])
+   
