@@ -25,7 +25,7 @@ yl = 10**2
 nx = 10**2
 ny = 10**2 #number of nodes
 nn = nx*ny
-printFreq = 10
+printFreq = 20
 
 # Create array that stores elevation scalar
 # Convention wherein single number describes node
@@ -50,9 +50,9 @@ h = np.array([9,0,0,0,6,6,6,5,4,3,
 
 
 k = 1.0*10**(-4)
-U = 2.0*10**(-4) #(m/yr)
+U = 2.0*10**(-3) #(m/yr)
 delta_t = 10.0**3 #yrs; timestep
-num_timesteps = 100 #number of timesteps
+num_timesteps = 300 #number of timesteps
 n = 1.0 #Slope exponent
 m = 0.4 # drainage area exponent
 ################
@@ -72,7 +72,24 @@ def plot_mesh(oneD_in, cmap = 'gist_earth'):
     #plt.gca().invert_yaxis()
     #plt.show()
 
- 
+
+def long_profile():
+    #get index of node with biggest drainage area
+    node = np.argmax(area[indexVector])
+    
+    #declare python lists for length, elevations
+    profile_distance = [0]
+    profile_h = [h[node]]
+    
+    #ask donors who has largest area...
+    #get the donor with the biggest drainage area... 
+    while (ndon[node] > 0):
+        node = donor[np.argmax(area[donor[0:ndon[node], node]]), node] 
+        profile_h.append(h[node])
+        profile_distance.append(delta_x[node]+profile_distance[-1])
+    plt.plot(profile_distance, profile_h)
+    plt.show()
+     
 reshaped_h = h.reshape(ny,nx)
 
 
@@ -100,7 +117,9 @@ dist_neighbors = np.array([diag_dist, dy, diag_dist,
 
 #Loop over timesteps
 for istep in range(num_timesteps):    
-    
+    if istep > 150:
+        U = 4.0*10**(-3) #(m/yr)
+
     #Build receiver array
     #receiver array stores each node's lowest neighbor
     for ij in oneD_noBoundary:
@@ -198,7 +217,7 @@ for istep in range(num_timesteps):
     for ij in stack:
         if (receiver[ij] != ij):
          #   print ij
-            C = k*area[ij]*delta_t/delta_x[ij]
+            C = k*area[ij]**m*delta_t/delta_x[ij]
             h[ij] = (h[ij] + C*h[receiver[ij]])/(1 + C) 
             #note, for stability, C should be between 0 and 1
             #where stability = erosion not too fast or too slow
@@ -207,6 +226,8 @@ for istep in range(num_timesteps):
     if (istep % printFreq == 0):
         plot_mesh(h)
         plt.show()
+        long_profile()
+        print 'timestep: ' + str(istep)
 #%% Plotting
 print 'It took', time.time()-start, 'seconds.'
 
@@ -260,20 +281,3 @@ plt.show()
 plot_mesh(catchment)
 plt.show()
 
-
-#%% Find largest drainage area, plot long profile
-baseLevels = receiver[receiver == indexVector]
-catchmentAreas = area[baseLevels]
-index_baseLevel_biggestCatchment = np.argmax(catchmentAreas)
-node = index_baseLevel_biggestCatchment
-
-#declare python lists for length, elevations
-profile_distance = [0]
-profile_h = [h[node]]
-
-#ask donors who has largest area...
-#get the donor with the biggest drainage area... 
-while (ndon[node] > 0):
-    node = donor[np.argmax( area[donor[0:ndon[node], node]]), node ] 
-    profile_h.append(h[node])
-   
