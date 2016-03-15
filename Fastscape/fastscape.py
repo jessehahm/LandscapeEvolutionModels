@@ -104,9 +104,6 @@ oneD_noBoundary = twoD_noBoundary.ravel()
 oneD_Boundary = np.delete(indexVector,oneD_noBoundary)
 # to get boundaries; not this!
 
-dist_neighbors = np.array([diag_dist, dy, diag_dist,
-                           dx,        1,  dx,
-                           diag_dist, dy, diag_dist])
 
 
 #%% The loop
@@ -118,11 +115,17 @@ dist_neighbors = np.array([diag_dist, dy, diag_dist,
 #Loop over timesteps
 for istep in range(num_timesteps):    
     if istep > 150:
-        U = 4.0*10**(-3) #(m/yr)
+        k = 0.5*10**(-4) #(m/yr)
 
     #Build receiver array
+# For cyclic: ---> include as your neighbor the cell on opposite side
+
     #receiver array stores each node's lowest neighbor
     for ij in oneD_noBoundary:
+        dist_neighbors = np.array([diag_dist, dy, diag_dist,
+                           dx,        1,  dx,
+                           diag_dist, dy, diag_dist])
+
         # if not on boundary:
         ij_neighbors =np.array([ij-nx-1, ij-nx, ij-nx+1,
                                 ij-1,    ij,    ij+1,
@@ -140,6 +143,27 @@ for istep in range(num_timesteps):
         slope[ij] = steepest_descent
         direction[ij] = steepest_descent_index    
         delta_x[ij] = dist_neighbors[steepest_descent_index]
+   #Receiver array for bottom wall
+    dist_neighbors = np.array([dx,        1,  dx,
+                           diag_dist, dy, diag_dist])
+    for ij in np.arange(1,nx-1):
+        ij_neighbors =np.array([ij-1,    ij,    ij+1,
+                                ij+nx-1, ij+nx, ij+nx+1])  
+        
+        h_neighbors = h[ij_neighbors]
+    
+        delta_h = h[ij] - h_neighbors    
+        
+        slope_neighbors = delta_h/dist_neighbors
+    
+        steepest_descent = max(slope_neighbors)
+        steepest_descent_index = np.argmax(slope_neighbors)
+        receiver[ij] = ij_neighbors[steepest_descent_index]
+        slope[ij] = steepest_descent
+        direction[ij] = steepest_descent_index    
+        delta_x[ij] = dist_neighbors[steepest_descent_index]
+ 
+    
     reshaped_receiver = receiver.reshape(ny,nx)
     
     
@@ -213,10 +237,14 @@ for istep in range(num_timesteps):
     #Add uplift to all nodes away from boundary
     for ij in oneD_noBoundary:
         h[ij] = h[ij] + U*delta_t
+    #One-sided boundary condition (reflective):
+    for ij in np.arange(nx):
+        h[ij] = h[ij] + U*delta_t
+    
+        
     #calculate erosion for all in stack
     for ij in stack:
         if (receiver[ij] != ij):
-         #   print ij
             C = k*area[ij]**m*delta_t/delta_x[ij]
             h[ij] = (h[ij] + C*h[receiver[ij]])/(1 + C) 
             #note, for stability, C should be between 0 and 1
