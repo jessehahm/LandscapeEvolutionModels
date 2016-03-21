@@ -22,10 +22,10 @@ start = time.time()
 xl = 10**1                                                                              
 yl = 10**1
 #Resolution of the grid
-nx = 10**2
-ny = 10**2 #number of nodes
+nx = 10**1
+ny = 10**1 #number of nodes
 nn = nx*ny
-printFreq = 10
+printFreq = 20
 
 # Create array that stores elevation scalar
 # Convention wherein single number describes node
@@ -50,9 +50,9 @@ h = np.array([9,0,0,0,6,6,6,5,4,3,
 
 
 k = 1.0*10**(-4)
-U = 2.0*10**(-3) #(m/yr)
+U = 1.0*10**(-3) #(m/yr)
 delta_t = 10.0**3 #yrs; timestep
-num_timesteps = 150 #number of timesteps
+num_timesteps = 300 #number of timesteps
 n = 1.0 #Slope exponent
 m = 0.4 # drainage area exponent
 ################
@@ -68,9 +68,10 @@ def plot_mesh(oneD_in, cmap = 'gist_earth'):
     optional colormap"""
     grid = np.reshape(oneD_in,(ny,nx))
     plt.pcolormesh(grid, cmap=cmap)
+    plt.gca().invert_yaxis()
     plt.colorbar()
     #plt.gca().invert_yaxis()
-    #plt.show()
+    plt.show()
 
 
 def long_profile():
@@ -119,11 +120,56 @@ for istep in range(num_timesteps):
 
     #Build receiver array
     #receiver array stores each node's lowest neighbor
-    for ij in oneD_noBoundary:
-        dist_neighbors = np.array([diag_dist, dy, diag_dist,
-                           dx,        1,  dx,
-                           diag_dist, dy, diag_dist])
 
+# Corners first:
+    #receiver array for corner ij = 0
+    ij = 0
+    dist_neighbors = np.array([1,  dx,
+                               dy, diag_dist])
+
+    ij_neighbors =np.array([ij,    ij+1,
+                            ij+nx, ij+nx+1])  
+    
+    h_neighbors = h[ij_neighbors]
+
+    delta_h = h[ij] - h_neighbors    
+    
+    slope_neighbors = delta_h/dist_neighbors
+
+    steepest_descent = max(slope_neighbors)
+    steepest_descent_index = np.argmax(slope_neighbors)
+    receiver[ij] = ij_neighbors[steepest_descent_index]
+    slope[ij] = steepest_descent
+    direction[ij] = steepest_descent_index    
+    delta_x[ij] = dist_neighbors[steepest_descent_index]
+
+    #receiver array for corner ij = nx-1
+    ij = nx-1
+    dist_neighbors = np.array([dx,        1,  
+                               diag_dist, dy])
+  
+    ij_neighbors =np.array([ij-1,    ij,  
+                            ij+nx-1, ij+nx])  
+    
+    h_neighbors = h[ij_neighbors]
+
+    delta_h = h[ij] - h_neighbors    
+    
+    slope_neighbors = delta_h/dist_neighbors
+
+    steepest_descent = max(slope_neighbors)
+    steepest_descent_index = np.argmax(slope_neighbors)
+    receiver[ij] = ij_neighbors[steepest_descent_index]
+    slope[ij] = steepest_descent
+    direction[ij] = steepest_descent_index    
+    delta_x[ij] = dist_neighbors[steepest_descent_index]
+
+
+
+    dist_neighbors = np.array([diag_dist, dy, diag_dist,
+                               dx,        1,  dx,
+                               diag_dist, dy, diag_dist])
+    for ij in oneD_noBoundary:
         # if not on boundary:
         ij_neighbors =np.array([ij-nx-1, ij-nx, ij-nx+1,
                                 ij-1,    ij,    ij+1,
@@ -141,11 +187,11 @@ for istep in range(num_timesteps):
         slope[ij] = steepest_descent
         direction[ij] = steepest_descent_index    
         delta_x[ij] = dist_neighbors[steepest_descent_index]
-   #Receiver array for y = 0 wall
-    dist_neighbors = np.array([dx,        1,  dx,
-                           diag_dist, dy, diag_dist])
+
+    #Receiver array for y = 0 wall (Reflection)
     for ij in np.arange(1,nx-1):
-        ij_neighbors =np.array([ij-1,    ij,    ij+1,
+        ij_neighbors =np.array([ij+nx-1, ij+nx, ij+nx+1,
+                                ij-1,    ij,    ij+1,
                                 ij+nx-1, ij+nx, ij+nx+1])  
         
         h_neighbors = h[ij_neighbors]
@@ -165,9 +211,7 @@ for istep in range(num_timesteps):
 
     #receiver array for x = 0 wall (cyclic)
     for ij in np.arange(nx,nx*ny-nx,nx):
-        dist_neighbors = np.array([diag_dist, dy, diag_dist,
-                           dx,        1,  dx,
-                           diag_dist, dy, diag_dist])
+
 
         ij_neighbors =np.array([ij-1,      ij-nx, ij-nx+1,
                                 ij+nx-1,   ij,    ij+1,
@@ -187,10 +231,7 @@ for istep in range(num_timesteps):
         delta_x[ij] = dist_neighbors[steepest_descent_index]
         
         #receiver array for x = nx-1 wall (cyclic)
-    for ij in np.arange(nx-1,nx*ny-nx,nx):
-        dist_neighbors = np.array([diag_dist, dy, diag_dist,
-                           dx,        1,  dx,
-                           diag_dist, dy, diag_dist])
+    for ij in np.arange(2*nx-1,nx*ny-nx,nx):
 
         ij_neighbors =np.array([ij-nx-1, ij-nx, ij-2*nx+1,
                                 ij-1,    ij,    ij-nx+1,
@@ -209,8 +250,11 @@ for istep in range(num_timesteps):
         direction[ij] = steepest_descent_index    
         delta_x[ij] = dist_neighbors[steepest_descent_index]
 
+
+
+    ####DONE WITH RECEIVER CALCULATIONS ON DOMAIN AND BOUNDARIES####
  
-    
+ 
     reshaped_receiver = receiver.reshape(ny,nx)
     
     
@@ -288,10 +332,12 @@ for istep in range(num_timesteps):
     for ij in np.arange(nx):
         h[ij] = h[ij] + U*delta_t
     #receiver array for x = nx-1 wall (cyclic)
-    for ij in np.arange(nx-1,nx*ny-nx,nx):
+#    for ij in np.arange(nx-1,nx*ny-nx,nx):
+    for ij in np.arange(2*nx-1,nx*ny-nx,nx):        
         h[ij] = h[ij] + U*delta_t
     #receiver array for x = 0 wall (cyclic)
     for ij in np.arange(nx,nx*ny-nx,nx):
+#    for ij in np.arange(nx,nx*ny-nx,nx):
         h[ij] = h[ij] + U*delta_t
         
     #calculate erosion for all in stack
@@ -304,62 +350,63 @@ for istep in range(num_timesteps):
 
     #Print the landscape
     if (istep % printFreq == 0):
+        print 'timestep: ' + str(istep)        
         plot_mesh(h)
-        plt.show()
         long_profile()
-        print 'timestep: ' + str(istep)
+        
 #%% Plotting
 print 'It took', time.time()-start, 'seconds.'
 
 
 # Plot grid-coded by height 
+print 'Final grid:'
 plot_mesh(h)
 
 # Plot arrows of steepest descent
 #Build arrow index vector arrays
-U = np.zeros(nn)
-V = np.zeros(nn)
-for ij in indexVector:
-    if direction[ij] == 0:
-        U[ij] = -1
-        V[ij] = 1
-    if direction[ij] == 1:
-        U[ij] = 0
-        V[ij] = 1
-    if direction[ij] == 2:
-        U[ij] = 1
-        V[ij] = 1
-    if direction[ij] == 3:
-        U[ij] = -1
-        V[ij] = 0
-    if direction[ij] == 4:
-        U[ij] = 0
-        V[ij] = 0
-    if direction[ij] == 5:
-        U[ij] = 1
-        V[ij] = 0
-    if direction[ij] == 6:
-        U[ij] = -1
-        V[ij] = -1
-    if direction[ij] == 7:
-        U[ij] = 0
-        V[ij] = -1
-    if direction[ij] == 8:
-        U[ij] = 1
-        V[ij] = -1
-
-
-
-qx = np.arange(nx)
-qy = np.arange(ny)
-qU = U.reshape(ny,nx)
-qV = V.reshape(ny,nx)
-Q = plt.quiver(qx+(dx/2.0),qy+(dy/2.0),qU,qV)
-
-plt.gca().invert_yaxis()
-plt.show()
+plotQuiver = False
+if plotQuiver == True:
+        
+    U = np.zeros(nn)
+    V = np.zeros(nn)
+    for ij in indexVector:
+        if direction[ij] == 0:
+            U[ij] = -1
+            V[ij] = 1
+        if direction[ij] == 1:
+            U[ij] = 0
+            V[ij] = 1
+        if direction[ij] == 2:
+            U[ij] = 1
+            V[ij] = 1
+        if direction[ij] == 3:
+            U[ij] = -1
+            V[ij] = 0
+        if direction[ij] == 4:
+            U[ij] = 0
+            V[ij] = 0
+        if direction[ij] == 5:
+            U[ij] = 1
+            V[ij] = 0
+        if direction[ij] == 6:
+            U[ij] = -1
+            V[ij] = -1
+        if direction[ij] == 7:
+            U[ij] = 0
+            V[ij] = -1
+        if direction[ij] == 8:
+            U[ij] = 1
+            V[ij] = -1
+    
+    
+    
+    qx = np.arange(nx)
+    qy = np.arange(ny)
+    qU = U.reshape(ny,nx)
+    qV = V.reshape(ny,nx)
+    Q = plt.quiver(qx+(dx/2.0),qy+(dy/2.0),qU,qV)
+    plt.show()
+print 'Catchments:'    
 plot_mesh(catchment)
-plt.gca().invert_yaxis()
-
 plt.show()
 
