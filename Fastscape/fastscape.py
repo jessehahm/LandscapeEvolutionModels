@@ -18,14 +18,14 @@ start = time.time()
 ####################################
 #USER DEFINED LANDSCAPE VARIABLES
 
-# Scale of the grid; km
-xl = 10**2
-yl = 10**2
+# Scale of the grid; m
+xl = 10**1                                                                              
+yl = 10**1
 #Resolution of the grid
 nx = 10**2
 ny = 10**2 #number of nodes
 nn = nx*ny
-printFreq = 20
+printFreq = 10
 
 # Create array that stores elevation scalar
 # Convention wherein single number describes node
@@ -52,14 +52,14 @@ h = np.array([9,0,0,0,6,6,6,5,4,3,
 k = 1.0*10**(-4)
 U = 2.0*10**(-3) #(m/yr)
 delta_t = 10.0**3 #yrs; timestep
-num_timesteps = 300 #number of timesteps
+num_timesteps = 150 #number of timesteps
 n = 1.0 #Slope exponent
 m = 0.4 # drainage area exponent
 ################
 
 # DERIVED VARIABLES
-dx = xl/(nx)
-dy = yl/(ny) 
+dx = xl/float(nx)
+dy = yl/float(ny) 
 indexVector = np.arange(nn)
 reshaped_index = indexVector.reshape(ny,nx)
 
@@ -118,8 +118,6 @@ for istep in range(num_timesteps):
         k = 0.5*10**(-4) #(m/yr)
 
     #Build receiver array
-# For cyclic: ---> include as your neighbor the cell on opposite side
-
     #receiver array stores each node's lowest neighbor
     for ij in oneD_noBoundary:
         dist_neighbors = np.array([diag_dist, dy, diag_dist,
@@ -143,7 +141,7 @@ for istep in range(num_timesteps):
         slope[ij] = steepest_descent
         direction[ij] = steepest_descent_index    
         delta_x[ij] = dist_neighbors[steepest_descent_index]
-   #Receiver array for bottom wall
+   #Receiver array for y = 0 wall
     dist_neighbors = np.array([dx,        1,  dx,
                            diag_dist, dy, diag_dist])
     for ij in np.arange(1,nx-1):
@@ -162,6 +160,55 @@ for istep in range(num_timesteps):
         slope[ij] = steepest_descent
         direction[ij] = steepest_descent_index    
         delta_x[ij] = dist_neighbors[steepest_descent_index]
+
+# For cyclic: ---> include as your neighbor the cell on opposite side
+
+    #receiver array for x = 0 wall (cyclic)
+    for ij in np.arange(nx,nx*ny-nx,nx):
+        dist_neighbors = np.array([diag_dist, dy, diag_dist,
+                           dx,        1,  dx,
+                           diag_dist, dy, diag_dist])
+
+        ij_neighbors =np.array([ij-1,      ij-nx, ij-nx+1,
+                                ij+nx-1,   ij,    ij+1,
+                                ij+2*nx-1, ij+nx, ij+nx+1])  
+        
+        h_neighbors = h[ij_neighbors]
+    
+        delta_h = h[ij] - h_neighbors    
+        
+        slope_neighbors = delta_h/dist_neighbors
+    
+        steepest_descent = max(slope_neighbors)
+        steepest_descent_index = np.argmax(slope_neighbors)
+        receiver[ij] = ij_neighbors[steepest_descent_index]
+        slope[ij] = steepest_descent
+        direction[ij] = steepest_descent_index    
+        delta_x[ij] = dist_neighbors[steepest_descent_index]
+        
+        #receiver array for x = nx-1 wall (cyclic)
+    for ij in np.arange(nx-1,nx*ny-nx,nx):
+        dist_neighbors = np.array([diag_dist, dy, diag_dist,
+                           dx,        1,  dx,
+                           diag_dist, dy, diag_dist])
+
+        ij_neighbors =np.array([ij-nx-1, ij-nx, ij-2*nx+1,
+                                ij-1,    ij,    ij-nx+1,
+                                ij+nx-1, ij+nx, ij+1])  
+        
+        h_neighbors = h[ij_neighbors]
+    
+        delta_h = h[ij] - h_neighbors    
+        
+        slope_neighbors = delta_h/dist_neighbors
+    
+        steepest_descent = max(slope_neighbors)
+        steepest_descent_index = np.argmax(slope_neighbors)
+        receiver[ij] = ij_neighbors[steepest_descent_index]
+        slope[ij] = steepest_descent
+        direction[ij] = steepest_descent_index    
+        delta_x[ij] = dist_neighbors[steepest_descent_index]
+
  
     
     reshaped_receiver = receiver.reshape(ny,nx)
@@ -237,10 +284,15 @@ for istep in range(num_timesteps):
     #Add uplift to all nodes away from boundary
     for ij in oneD_noBoundary:
         h[ij] = h[ij] + U*delta_t
-    #One-sided boundary condition (reflective):
+    #One-sided boundary condition (reflective), x=0:
     for ij in np.arange(nx):
         h[ij] = h[ij] + U*delta_t
-    
+    #receiver array for x = nx-1 wall (cyclic)
+    for ij in np.arange(nx-1,nx*ny-nx,nx):
+        h[ij] = h[ij] + U*delta_t
+    #receiver array for x = 0 wall (cyclic)
+    for ij in np.arange(nx,nx*ny-nx,nx):
+        h[ij] = h[ij] + U*delta_t
         
     #calculate erosion for all in stack
     for ij in stack:
@@ -307,5 +359,7 @@ Q = plt.quiver(qx+(dx/2.0),qy+(dy/2.0),qU,qV)
 plt.gca().invert_yaxis()
 plt.show()
 plot_mesh(catchment)
+plt.gca().invert_yaxis()
+
 plt.show()
 
