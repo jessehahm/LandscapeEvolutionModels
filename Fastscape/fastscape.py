@@ -19,11 +19,11 @@ start = time.time()
 #USER DEFINED LANDSCAPE VARIABLES
 
 # Scale of the grid; m
-xl = 10**1                                                                              
-yl = 10**1
+xl = 10**3                                                                              
+yl = 10**3
 #Resolution of the grid
-nx = 10**1
-ny = 10**1 #number of nodes
+nx = 10**2
+ny = 10**2 #number of nodes
 nn = nx*ny
 printFreq = 20
 
@@ -49,7 +49,8 @@ h = np.array([9,0,0,0,6,6,6,5,4,3,
 """
 
 
-k = 1.0*10**(-4)
+k_s = 1.0*10**(-3) #Stream power coefficient
+k_d = 5.0*10**(-4) #Diffusion coefficient
 U = 1.0*10**(-3) #(m/yr)
 delta_t = 10.0**3 #yrs; timestep
 num_timesteps = 300 #number of timesteps
@@ -318,7 +319,6 @@ for istep in range(num_timesteps):
     #%% Calculate new heights
     
     #Two exceptional cases
-    # Boundaries: Don't add uplift, don't change h
     # Local minima: Just add uplift
     
     #Add uplift to all non-boundary nodes
@@ -340,13 +340,34 @@ for istep in range(num_timesteps):
 #    for ij in np.arange(nx,nx*ny-nx,nx):
         h[ij] = h[ij] + U*delta_t
         
-    #calculate erosion for all in stack
+    #calculate Stream-Power erosion for all in stack
     for ij in stack:
         if (receiver[ij] != ij):
-            C = k*area[ij]**m*delta_t/delta_x[ij]
+            C = k_s*area[ij]**m*delta_t/delta_x[ij]
             h[ij] = (h[ij] + C*h[receiver[ij]])/(1 + C) 
             #note, for stability, C should be between 0 and 1
             #where stability = erosion not too fast or too slow
+
+    diffusion = True
+    if diffusion == True:
+        #Calculate Diffusion erosion for all in stack except for boundary nodes
+        for ij in stack:
+            if ij in oneD_noBoundary:
+                h[ij] = h[ij] + delta_t*k_d* ((h[ij+1] -2*h[ij]-h[ij-1] )/dx +
+                                              (h[ij+nx]-2*h[ij]-h[ij-nx])/dy) 
+        #Calculate diffusion for cyclic boundaries
+        #x = 0 wall (cyclic)
+        for ij in np.arange(nx,nx*ny-nx,nx):
+            h[ij] = h[ij] + delta_t*k_d*((h[ij+1] -2*h[ij]-h[ij+nx-1])/dx +
+                                         (h[ij+nx]-2*h[ij]-h[ij-nx])  /dy) 
+        #receiver array for x = nx-1 wall (cyclic)
+        for ij in np.arange(2*nx-1,nx*ny-nx,nx):
+            h[ij] = h[ij] + delta_t*k_d* ((h[ij-nx+1] -2*h[ij]-h[ij-1] )/dx +
+                                          (h[ij+nx]-2*h[ij]-h[ij-nx])/dy) 
+
+        
+                                                     
+            
 
     #Print the landscape
     if (istep % printFreq == 0):
