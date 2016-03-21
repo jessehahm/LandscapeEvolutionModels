@@ -10,6 +10,8 @@ EPS 117, UC Berkeley, Spring 2016
 ###  Import required libraries
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 import time
 #from numba import autojit
 start = time.time()
@@ -19,11 +21,11 @@ start = time.time()
 #USER DEFINED LANDSCAPE VARIABLES
 
 # Scale of the grid; m
-xl = 10**3                                                                              
-yl = 10**3
+xl = 1000                                                                              
+yl = 500
 #Resolution of the grid
-nx = 10**2
-ny = 10**2 #number of nodes
+nx = 100
+ny = 50 #number of nodes
 nn = nx*ny
 printFreq = 20
 
@@ -50,10 +52,10 @@ h = np.array([9,0,0,0,6,6,6,5,4,3,
 
 
 k_s = 1.0*10**(-3) #Stream power coefficient
-k_d = 5.0*10**(-4) #Diffusion coefficient
+k_d = 1.0*10**(-4) #Diffusion coefficient
 U = 1.0*10**(-3) #(m/yr)
 delta_t = 10.0**3 #yrs; timestep
-num_timesteps = 300 #number of timesteps
+num_timesteps = 100 #number of timesteps
 n = 1.0 #Slope exponent
 m = 0.4 # drainage area exponent
 ################
@@ -116,8 +118,9 @@ oneD_Boundary = np.delete(indexVector,oneD_noBoundary)
 
 #Loop over timesteps
 for istep in range(num_timesteps):    
-    if istep > 150:
-        k = 0.5*10**(-4) #(m/yr)
+#Change k_s or k_d or U midway
+#    if istep > 150:
+#        k = 0.5*10**(-4) #(m/yr)
 
     #Build receiver array
     #receiver array stores each node's lowest neighbor
@@ -431,3 +434,51 @@ print 'Catchments:'
 plot_mesh(catchment)
 plt.show()
 
+#%% 3dPlot
+#%matplotlib qt
+plot3D=True
+if plot3D ==True:
+        
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+#    X = np.arange(0, dx*nx, dx)
+#    Y = np.arange(0, dy*ny, dy)
+    X = np.arange(nx)
+    Y = np.arange(ny)
+    X, Y = np.meshgrid(X, Y)
+    Z = h.reshape(ny,nx)
+    surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='gist_earth',
+                           linewidth=0, antialiased=True)
+    #ax.set_zlim(-1.01, 1.01)
+    
+    #ax.zaxis.set_major_locator(LinearLocator(10))
+    #ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.view_init(15, 70)
+    fig.colorbar(surf, shrink=1, aspect=5)
+    ax.set_zlim([0,yl/2])
+    
+    plt.show()
+    
+#%% WirePlot
+#%matplotlib qt
+plotWire=True
+if plotWire ==True:
+        
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+#    X = np.arange(0, dx*nx, dx)
+#    Y = np.arange(0, dy*ny, dy)
+    X = np.arange(nx)
+    Y = np.arange(ny)
+    X, Y = np.meshgrid(X, Y)
+    Z = h.reshape(ny,nx)
+    surf = ax.plot_wireframe(X, Y, Z, linewidth=0.1, antialiased=False)
+    #ax.set_zlim(-1.01, 1.01)
+    
+    #ax.zaxis.set_major_locator(LinearLocator(10))
+    #ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.view_init(15, 70)
+  #  fig.colorbar(surf, shrink=1, aspect=5)
+    ax.set_zlim([0,yl/2])
+
+    plt.show()    
